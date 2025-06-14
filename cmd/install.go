@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"encoding/json"
-	"log"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -12,51 +12,51 @@ import (
 var installCmd = &cobra.Command{
 	Use:   "install",
 	Short: "Install the Chrome native messaging host",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
+		// Read the manifest file
+		manifestData, err := os.ReadFile("chrome-host.json")
+		if err != nil {
+			return fmt.Errorf("failed to read manifest file: %w", err)
+		}
+
+		// Parse the manifest
+		var manifest map[string]interface{}
+		if err := json.Unmarshal(manifestData, &manifest); err != nil {
+			return fmt.Errorf("failed to parse manifest file: %w", err)
+		}
+
 		// Get the absolute path of the current executable
-		execPath, err := os.Executable()
+		exePath, err := os.Executable()
 		if err != nil {
-			log.Fatalf("Failed to get executable path: %v", err)
+			return fmt.Errorf("failed to get executable path: %w", err)
 		}
-		absPath, err := filepath.Abs(execPath)
+		exePath, err = filepath.Abs(exePath)
 		if err != nil {
-			log.Fatalf("Failed to get absolute path: %v", err)
+			return fmt.Errorf("failed to get absolute path: %w", err)
 		}
 
-		// TODO: fix manifest file
-		manifest := map[string]interface{}{
-			"name":            "com.google.chrome.biscuit.exercism",
-			"description":     "Chrome Native Messaging API Example Host",
-			"path":            absPath,
-			"type":            "stdio",
-			"allowed_origins": []string{"chrome-extension://knldjmfmopnpolahpmmgbagdohdnhkik/"},
+		// Update the path in the manifest
+		manifest["path"] = exePath
+
+		// Create the NativeMessagingHosts directory if it doesn't exist
+		hostsDir := filepath.Join(os.Getenv("HOME"), ".config", "google-chrome", "NativeMessagingHosts")
+		if err := os.MkdirAll(hostsDir, 0755); err != nil {
+			return fmt.Errorf("failed to create NativeMessagingHosts directory: %w", err)
 		}
 
-		// Marshal the manifest to JSON
-		manifestJSON, err := json.MarshalIndent(manifest, "", "  ")
+		// Write the updated manifest
+		manifestPath := filepath.Join(hostsDir, "com.biscuit.extensions.exercism.json")
+		updatedData, err := json.MarshalIndent(manifest, "", "  ")
 		if err != nil {
-			log.Fatalf("Failed to marshal manifest: %v", err)
+			return fmt.Errorf("failed to marshal updated manifest: %w", err)
 		}
 
-		// Define the user-specific target directory and file path
-		homeDir, err := os.UserHomeDir()
-		if err != nil {
-			log.Fatalf("Failed to get user home directory: %v", err)
-		}
-		targetDir := filepath.Join(homeDir, ".config", "google-chrome", "NativeMessagingHosts")
-		targetFile := filepath.Join(targetDir, "com.google.chrome.example.echo.json")
-
-		// Ensure the target directory exists
-		if err := os.MkdirAll(targetDir, 0755); err != nil {
-			log.Fatalf("Failed to create directory %s: %v", targetDir, err)
+		if err := os.WriteFile(manifestPath, updatedData, 0644); err != nil {
+			return fmt.Errorf("failed to write manifest file: %w", err)
 		}
 
-		// Write the manifest file
-		if err := os.WriteFile(targetFile, manifestJSON, 0644); err != nil {
-			log.Fatalf("Failed to write manifest file: %v", err)
-		}
-
-		log.Printf("Chrome native messaging host installed successfully at %s", targetFile)
+		fmt.Printf("Chrome native messaging host installed at %s\n", manifestPath)
+		return nil
 	},
 }
 
