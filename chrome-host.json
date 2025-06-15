@@ -1,7 +1,7 @@
 {
   "name": "com.biscuit.extensions.exercism",
   "description": "Exercism Extension Native Messaging Host",
-  "path": "/opt/biscuit/exercism/extension-host",
+  "path": "/opt/biscuit/exercism/exercism-extension-host",
   "type": "stdio",
   "allowed_origins": [
     "chrome-extension://knldjmfmopnpolahpmmgbagdohdnhkik/"

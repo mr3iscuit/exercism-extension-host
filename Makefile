@@ -1,7 +1,7 @@
 .PHONY: build run install clean help chrome-install
 
 # Binary name
-BINARY_NAME=extension-host
+BINARY_NAME=exercism-extension-host
 INSTALL_DIR=/opt/biscuit/exercism
 MANIFEST_NAME=com.biscuit.extensions.exercism.json
 CHROME_HOSTS_DIR=$(HOME)/.config/google-chrome/NativeMessagingHosts

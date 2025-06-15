@@ -4,7 +4,7 @@
 *.dll
 *.so
 *.dylib
-extension-host
+exercism-extension-host
 
 # Test binary, built with `go test -c`
 *.test
